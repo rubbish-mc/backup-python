@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # main.py
-# Copyright (C) 2017-2018 Too-Naive and contributors
+# Copyright (C) 2018 Too-Naive and contributors
 #
 # This module is part of ingress-farm-bot and is released under
 # the AGPL v3 License: https://www.gnu.org/licenses/agpl-3.0.txt
@@ -29,7 +29,7 @@ def backupThread():
     Log.info('Starting backup function')
     while True:
         now_time = datetime.now().strftime('%Y%m%d_%H%M%S')
-        os.system("tar czf {}/{}.tar.gz {}/world/".format(Config.backup.webroot, now_time, Config.backup.mc_path))
+        os.system("tar czf {}/{}.tar.gz {}/world".format(Config.backup.webroot, now_time, Config.backup.mc_path))
         with open('{}/LATEST'.format(Config.backup.webroot)) as fout:
             fout.write(now_time)
         Log.info('{}.tar.gz backuped.', now_time)
