@@ -1,0 +1,18 @@
+[backup]
+webroot = 
+mc_path = 
+interval = 300
+download_path =
+website = 
+
+[log]
+logfile = data/log.log
+print_info = stdout
+log_info = true
+print_err = stderr
+log_err = true
+print_warn =
+log_warn = true
+print_debug = 
+log_debug = true
+debug_lvl = 3
