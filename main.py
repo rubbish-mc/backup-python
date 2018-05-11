@@ -46,9 +46,10 @@ def requestThread():
         if LASTEST == r.text:
             time.sleep(Config.backup.interval)
             continue
+        LASTEST = r.text
         s = requests.get('{}/{}'.format(Config.backup.website, LASTEST), stream=True)
         # From: https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
-        with open("{}/{}.tar.gz".format(Config.backup.download_path, r.context), 'wb') as fout:
+        with open("{}/{}.tar.gz".format(Config.backup.download_path, LASTEST), 'wb') as fout:
             for chunk in s.iter_content(chunk_size=1024):
                 if chunk:
                     fout.write(chunk)
