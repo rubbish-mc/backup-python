@@ -24,6 +24,9 @@ from libpy import Log
 import os
 import requests
 from sys import argv
+import re
+
+RE = re.compile(r'^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2}).tar.gz$')
 
 def backupThread():
     Log.info('Starting backup function')
@@ -33,6 +36,7 @@ def backupThread():
         with open('{}/LATEST'.format(Config.backup.webroot), 'w') as fout:
             fout.write(now_time)
         Log.info('{}.tar.gz backuped.', now_time)
+        fileChecking(Config.backup.webroot)
         time.sleep(Config.backup.interval)
 
 def requestThread():
@@ -49,7 +53,18 @@ def requestThread():
                 if chunk:
                     fout.write(chunk)
         Log.info('{}.tar.gz downloaded.', LASTEST)
+        fileChecking(Config.backup.download_path)
         time.sleep(Config.backup.interval)
+
+def fileChecking(path):
+	current_time = datetime.now().replace(microsecond=0)
+	for roots, dirs, files in os.walk(path):
+		if roots == path:
+			for x in files:
+				r = RE.match(x)
+				if r and \
+					(current_time-datetime(*(int(n) for n in r.groups()))).total_seconds() > Config.backup.interval*3:
+						os.remove('{}/{}'.format(path, x))
 
 if __name__ == '__main__':
     if len(argv) == 2 and argv[1] == '--backup':
