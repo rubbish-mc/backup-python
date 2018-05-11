@@ -32,7 +32,7 @@ def backupThread():
     Log.info('Starting backup function')
     while True:
         now_time = datetime.now().strftime('%Y%m%d_%H%M%S')
-        os.system("tar czf --absolute-names {}/{}.tar.gz {}/world".format(Config.backup.webroot, now_time, Config.backup.mc_path))
+        os.system("tar czfP {}/{}.tar.gz {}/world".format(Config.backup.webroot, now_time, Config.backup.mc_path))
         with open('{}/LATEST'.format(Config.backup.webroot), 'w') as fout:
             fout.write(now_time)
         Log.info('{}.tar.gz backuped.', now_time)
