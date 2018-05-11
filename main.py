@@ -43,7 +43,7 @@ def requestThread():
     LASTEST = None
     while True:
         r = requests.get('{}/LATEST'.format(Config.backup.website))
-        if LASTEST == r.context:
+        if LASTEST == r.text:
             time.sleep(Config.backup.interval)
             continue
         s = requests.get('{}/{}'.format(Config.backup.website, LASTEST), stream=True)
