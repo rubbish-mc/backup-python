@@ -31,7 +31,7 @@ RE = re.compile(r'^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2}).tar.gz$')
 def backupThread():
 	Log.info('Starting backup function')
 	while True:
-		now_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+		now_time = time.strftime('%Y%m%d_%H%M%S')
 		os.system("tar czfP {}/{}.tar.gz {}/world".format(Config.backup.webroot, now_time, Config.backup.mc_path))
 		try:
 			with open('{}/LATEST2'.format(Config.backup.webroot), 'w') as fout, open('{}/LATEST'.format(Config.backup.webroot)) as fin:
@@ -49,7 +49,7 @@ def mainRequest(LATEST):
 		return LATEST
 	_LATEST = LATEST
 	LATEST = r.text
-	s = requests.get('{}/{}.tar.gz'.format(Config.backup.website, LATEST), stream=True, timetout=10)
+	s = requests.get('{}/{}.tar.gz'.format(Config.backup.website, LATEST), stream=True, timeout=10)
 	try:
 		s.raise_for_status()
 	except Exception as e:
