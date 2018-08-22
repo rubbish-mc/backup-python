@@ -29,39 +29,48 @@ import re
 RE = re.compile(r'^(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2}).tar.gz$')
 
 def backupThread():
-    Log.info('Starting backup function')
-    while True:
-        now_time = datetime.now().strftime('%Y%m%d_%H%M%S')
-        os.system("tar czfP {}/{}.tar.gz {}/world".format(Config.backup.webroot, now_time, Config.backup.mc_path))
-        with open('{}/LATEST'.format(Config.backup.webroot), 'w') as fout:
-            fout.write(now_time)
-        Log.info('{}.tar.gz backuped.', now_time)
-        fileChecking(Config.backup.webroot)
-        time.sleep(Config.backup.interval)
+	Log.info('Starting backup function')
+	while True:
+		now_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+		os.system("tar czfP {}/{}.tar.gz {}/world".format(Config.backup.webroot, now_time, Config.backup.mc_path))
+		try:
+			with open('{}/LATEST2'.format(Config.backup.webroot), 'w') as fout, open('{}/LATEST'.format(Config.backup.webroot)) as fin:
+				fout.write(fin.read())
+		except IOError: pass
+		with open('{}/LATEST'.format(Config.backup.webroot), 'w') as fout:
+			fout.write(now_time)
+		Log.info('{}.tar.gz backuped.', now_time)
+		fileChecking(Config.backup.webroot)
+		time.sleep(Config.backup.interval)
+
+def mainRequest(LATEST):
+	r = requests.get('{}/LATEST'.format(Config.backup.website), timeout=10)
+	if LATEST == r.text:
+		return LATEST
+	_LATEST = LATEST
+	LATEST = r.text
+	s = requests.get('{}/{}.tar.gz'.format(Config.backup.website, LATEST), stream=True, timetout=10)
+	try:
+		s.raise_for_status()
+	except Exception as e:
+		Log.error('Catched Exception:`{}\'', repr(e))
+		return _LATEST
+	# From: https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
+	with open("{}/{}.tar.gz".format(Config.backup.download_path, LATEST), 'wb') as fout:
+		for chunk in s.iter_content(chunk_size=1024):
+			if not chunk: break
+			fout.write(chunk)
+	Log.info('{}.tar.gz downloaded.', LATEST)
+	fileChecking(Config.backup.download_path)
+	return LATEST
 
 def requestThread():
-    LASTEST = None
-    while True:
-        r = requests.get('{}/LATEST'.format(Config.backup.website))
-        if LASTEST == r.text:
-            time.sleep(Config.backup.interval)
-            continue
-        LASTEST = r.text
-        s = requests.get('{}/{}.tar.gz'.format(Config.backup.website, LASTEST), stream=True)
-        try:
-            s.raise_for_status()
-        except Exception as e:
-            Log.error('Catched Exception:`{}\'', repr(e))
-            time.sleep(Config.backup.interval)
-            continue
-        # From: https://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
-        with open("{}/{}.tar.gz".format(Config.backup.download_path, LASTEST), 'wb') as fout:
-            for chunk in s.iter_content(chunk_size=1024):
-                if chunk:
-                    fout.write(chunk)
-        Log.info('{}.tar.gz downloaded.', LASTEST)
-        fileChecking(Config.backup.download_path)
-        time.sleep(Config.backup.interval)
+	LATEST = None
+	while True:
+		try:
+			LATEST = mainRequest(LATEST)
+		except: Log.write_traceback_error('Error while requesting file')
+		finally: time.sleep(Config.backup.interval)
 
 def fileChecking(path):
 	current_time = datetime.now().replace(microsecond=0)
@@ -74,9 +83,9 @@ def fileChecking(path):
 						os.remove('{}/{}'.format(path, x))
 
 if __name__ == '__main__':
-    if len(argv) == 2 and argv[1] == '--backup':
-        backupThread()
-    elif len(argv) == 2 and argv[1] == '--download':
-        requestThread()
-    else:
-        pass
+	if len(argv) == 2 and argv[1] == '--backup':
+		backupThread()
+	elif len(argv) == 2 and argv[1] == '--download':
+		requestThread()
+	else:
+		pass
